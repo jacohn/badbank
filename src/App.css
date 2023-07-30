@@ -1,3 +1,7 @@
+.active {
+  background-color: #ddd;
+}
+
 .App {
   text-align: center;
 }
@@ -5,6 +9,17 @@
 .App-logo {
   height: 40vmin;
   pointer-events: none;
+}
+
+.transparent-table table,
+.transparent-table th,
+.transparent-table td {
+  background-color: transparent;
+}
+
+.button-spacing {
+  margin-right: 10px;
+  margin-top: 5px;
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -36,3 +51,4 @@
     transform: rotate(360deg);
   }
 }
+
