@@ -1,12 +1,29 @@
 
-import React from 'react';
-import {UserContext, Card} from './context';
+import React, {useState, useEffect} from 'react';
+import { Card} from './context';
 import '../App.css'
 
 function AllData(){
-  const ctx = React.useContext(UserContext);
-  console.log(ctx.users.name)
-  
+  const [usersData, setUsersData]=useState([]);
+  const[loading, setLoading]
+=useState(true);
+
+useEffect(()=>{
+  fetch('account/alldata')
+  .then(response => response.json())
+  .then(data => {
+    setUsersData(data);
+    setLoading(false);
+  })
+  .catch(error=> {
+    console.error("There was an error fetching the data:", error);
+    setLoading(false);
+  });
+},[]);
+
+if(loading){
+  return <div>Loading...</div>;
+}
   return (
     <Card
       bgcolor="Info"
@@ -25,18 +42,18 @@ function AllData(){
             </tr>
         </thead>
         <tbody>
-            {ctx.users && ctx.users.map((user, index)=>(
-                <tr key={index}>
-                    <td>{user.name}</td>
-                    <td>{user.email}</td>
-                    <td>{user.password}</td>
-                    <td>{user.balance}</td>
-                </tr>
-            ))}
+          {usersData.map((user, index)=>(
+            <tr key={index}>
+              <td>{user.name}</td>
+              <td>{user.email}</td>
+              <td>{user.password}</td>
+              <td>{user.balance}</td>
+            </tr>
+          ))}
         </tbody>
       </table>
-    
-      </div>}
+      </div>
+      }
     />    
   );  
 

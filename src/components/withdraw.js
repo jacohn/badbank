@@ -34,26 +34,42 @@ function Withdraw() {
   }
 
   // function called when withdraw button is clicked
-  function handleWithdraw(e) {
+  async function handleWithdraw(e) {
     e.preventDefault();
     if (!validate(parseFloat(withdraw))) return;
+
     let newBalance = ctx.currentUser.balance - parseFloat(withdraw);
-
-    const userIndex = ctx.users.findIndex(
-      (user) => user.email === ctx.currentUser.email
-    );
+    const userIndex = ctx.users.findIndex(user => user.email === ctx.currentUser.email);
    
-  let newUsers=[...ctx.users];
-      newUsers[userIndex]={
+    let newUsers=[...ctx.users];
+    newUsers[userIndex]={
         ...newUsers[userIndex],
-        balance: newBalance};
+        balance: newBalance
+      };
 
-        ctx.updateUser({
+      const url='/account/withdraw';
+      try{
+        const response= await fetch(url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${ctx.currentUser.token}`  
+          },
+          body: JSON.stringify({email: ctx.currentUser.email, password: ctx.currentUser.password, withdraw: withdraw})
+        });
+        const data = await response.json();
+        console.log(data);      
+
+      
+      ctx.updateUser({
             ...ctx.currentUser, balance: newBalance
         });
         ctx.setCurrentUser(newUsers[userIndex]);
         setWithdraw(0.00);
+      }catch (error){
+        console.error("There was an error during the deposit operation", error);
       }
+    }
 
 // Render the component
   return (
@@ -62,9 +78,9 @@ function Withdraw() {
       header="Withdraw"
       body={<form onSubmit={handleWithdraw}>
         <div>
-          <text>Current User: {ctx.currentUser.name}</text>
+          <div>Current User: {ctx.currentUser.name}</div>
           <br />  
-          <text>Balance: ${ctx.currentUser ? ctx.currentUser.balance : '0'}</text>
+          <div>Balance: ${ctx.currentUser ? ctx.currentUser.balance : '0'}</div>
           <br />
           <input
             type="number"

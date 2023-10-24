@@ -32,6 +32,7 @@ function Card(props){
           {props.status && (<div id='createStatus'>{props.status}</div>)}
         </div>
       </div>      
+      
     );    
   }
 

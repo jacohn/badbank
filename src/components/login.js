@@ -3,6 +3,23 @@ import React, { useState } from "react";
 import { UserContext, Card } from "./context";
 import { Link } from "react-router-dom";
 import '../App.css'
+import firebase from 'firebase/app';
+import 'firebase/auth';
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCIPQ7mYVu5AgsvZKBuSUxvmwwvX0qa0pA",
+  authDomain: "courso-19d5c.firebaseapp.com",
+  databaseURL: "https://courso-19d5c-default-rtdb.firebaseio.com",
+  projectId: "courso-19d5c",
+  storageBucket: "courso-19d5c.appspot.com",
+  messagingSenderId: "1034126783799",
+  appId: "1:1034126783799:web:00b83ec948e61007e096b2",
+};
+
+// initialize firebase
+firebase.initializeApp(firebaseConfig);
+
+
 
 // define login component. 
 function Login() {
@@ -15,35 +32,53 @@ function Login() {
   // get current context
   const ctx = React.useContext(UserContext);
 
-  // validates user credentials
-  function validate(password, email) {
-    const user = ctx.users.find((user) => user.email === email);
-    if (!user || user.password !== password) {
-      setStatus("Error: Invalid login credentails");
-      setTimeout(() => setStatus(""), 3000);
-      return false;
-    }
-    return true;
-  }
 
   // called when submit button is pushed
-  function handleLogin(e) {
+  async function handleLogin(e) {
     e.preventDefault();
-    if (!validate(checkPassword, checkEmail)) return;
 
-    const user = ctx.users.find(
-      (user) => user.email === checkEmail && user.password === checkPassword
-    );
+    try{
+      //authenticate using Firebase
+      const userCredential= await firebase.auth()
+        .signInWithEmailAndPassword(checkEmail, checkPassword);
+      const user= userCredential.user;
 
-    if (user) {
-      ctx.setCurrentUser(user);
-      setShow(false);
+      // Get the ID token from Firebase
+      const idToken = await user.getIdToken();
+
+      // Send the ID token to your backend
+      const response= await fetch('/account/login',{
+          method:"POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer "+ idToken
+          },
+          body: JSON.stringify({email: checkEmail, password: checkPassword})
+        });
+
+        const data= await response.json();
+        console.log(data);
+
+        if (data.authenticated){
+          ctx.setCurrentUser(data.user);
+          setShow(false);
+        } else{
+          setStatus('Error: '+ data.message);
+          setTimeout(()=> setStatus(''), 3000);
+        }
+      } catch(error){
+        if (error.code && error.code.startsWith('auth/')){
+          //firebase authentication error
+          setStatus('Firebase Error: '+ error.message);
+        } else{
+          //server or network error
+          setStatus('Server or Network Error: '+ error.message);
+        }
+        setTimeout(()=> setStatus(''), 3000);
+      }
     }
-    else {
-        setStatus('Error: Invalid email or password');
-        setTimeout(() => setStatus(''), 3000);
-    }
-  }
+
+
 
   // component return
   return (
@@ -53,11 +88,11 @@ function Login() {
               bgcolor="primary"
               header="Login"
               status={status}
-              body= 
+              body= {
               <form onSubmit={handleLogin}>
                   <div>
                     <label>Email address</label>
-                    <br />
+                    <br/>
                     <input
                       type="input"
                       className="form-control"
@@ -92,8 +127,8 @@ function Login() {
                   </button>
                   </div>
                   </form>
+              }
                 />
-              
                 ) : (
                   <Card
               bgcolor="primary"
@@ -101,16 +136,15 @@ function Login() {
               status={status}
                   body={
                     <>
-                    <div>
-                      <text>Balance: ${ctx.currentUser ? ctx.currentUser.balance : '0'}</text>
+                    <div>Balance: ${ctx.currentUser ? ctx.currentUser.balance : '0'}
                     </div>
-                    <button type="deposit" className="btn btn-light button-spacing">
+                    <button type="button" className="btn btn-light button-spacing">
                       {" "}
                       <Link className="nav-link" to="/deposit/">
                         Deposit
                       </Link>
                     </button>
-                    <button type="withdraw" className="btn btn-light button-spacing">
+                    <button type="button" className="btn btn-light button-spacing">
                       {" "}
                       <Link className="nav-link" to="/withdraw/">
                         Withdraw
@@ -125,5 +159,8 @@ function Login() {
           
           );
                 }
+
+
+
 
 export default Login
